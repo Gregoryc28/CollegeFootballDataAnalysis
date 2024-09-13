@@ -10,6 +10,7 @@ data = pd.read_csv("CFBdata/cfb.csv")
 
 years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023"]
 
+
 def get_team_names():
     """
     Get the names of all the teams in the dataset.
@@ -26,6 +27,7 @@ def get_team_names():
     cfb_team_names = list(set(cfb_team_names))
 
     return cfb_team_names
+
 
 def getAverages(team):
     """
