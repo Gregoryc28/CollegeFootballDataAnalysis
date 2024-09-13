@@ -17,7 +17,6 @@ def getAverages(team):
     :param team: The name of the team to get the averages for.
     :return: A dictionary containing the averages of several categorical statistics for the team.
     """
-
     instances = []
     for index, row in data.iterrows():
         # Check if the team name is the same as the team we are looking for
@@ -104,6 +103,7 @@ def getAverages(team):
 
     return averageStats
 
+
 def getTopStats(averages):
     """
     Get the top 3 statistics that are positively correlated with wins and the top 3 statistics that are negatively correlated with wins.
@@ -113,7 +113,6 @@ def getTopStats(averages):
     :return: A table containing the top 3 statistics that are positively correlated with wins, the top 3 statistics
     that are negatively correlated with wins,
     """
-
     # Get the correlation between wins and all the other statistics
     correlations = {}
     for key in averages:
@@ -194,6 +193,7 @@ def print_table(df):
     """
     print(tabulate(df, headers="keys", tablefmt="pretty"))
 
+
 def predict_winner(team1, team2):
     """
     Predict the winner of a game between two teams based on the three statistics most closely correlated with wins.
@@ -202,7 +202,6 @@ def predict_winner(team1, team2):
     :param team2: The second team.
     :return: The predicted winner of the game, the number of points the predicted winner is expected to score, and the number of points the predicted loser is expected to score.
     """
-
     # Keep in mind the stats that have the highest correlation with wins
     # We will use the stats that have the highest correlation with wins
     # Get the averages for both teams (using the getAverages function)
@@ -247,6 +246,7 @@ def predict_winner(team1, team2):
     else:
         return team2, team2Points, team1Points
 
+
 def predict_winner_all_stats(team1, team2):
     """
     Predict the winner of a game between two teams based on all the statistics of the two teams.
@@ -255,7 +255,6 @@ def predict_winner_all_stats(team1, team2):
     :param team2: The second team.
     :return: The predicted winner of the game, the number of points the predicted winner is expected to score, and the number of points the predicted loser is expected to score.
     """
-
     # Get all the statistics for both teams. If the statistic is a good thing, add a point to the team with the higher value
     # If the statistic is a bad thing, add a point to the team with the lower value
     averagesTeam1 = getAverages(team1)
@@ -307,6 +306,7 @@ def predict_winner_all_stats(team1, team2):
     else:
         return team2, team2Points, team1Points
 
+
 def predict_points(team1, team2):
     """
     Predict the total number of points in a game between two teams.
@@ -315,7 +315,6 @@ def predict_points(team1, team2):
     :param team2: The second team.
     :return: The total number of points in a game between two teams.
     """
-
     # Get the averages for both teams
     averagesTeam1 = getAverages(team1)
     averagesTeam2 = getAverages(team2)
@@ -334,6 +333,7 @@ def predict_points(team1, team2):
 
     return round(expectedPointsTeam1 + expectedPointsTeam2, 3)
 
+
 def spread(team1, team2):
     """
     Predict the point spread in a game between two teams.
@@ -342,7 +342,6 @@ def spread(team1, team2):
     :param team2: The second team.
     :return: The predicted point spread in a game between two teams.
     """
-
     # Get the averages for both teams
     averagesTeam1 = getAverages(team1)
     averagesTeam2 = getAverages(team2)
