@@ -7,6 +7,10 @@ from datetime import datetime
 # Load environment variables
 load_dotenv()
 
+# Handle warnings
+import warnings
+warnings.simplefilter('error', RuntimeWarning)
+
 def access_cfb_api():
     api_key = os.getenv('API_KEY')
 
@@ -153,11 +157,21 @@ def get_current_week_games():
     '''
     headers, base_url = access_cfb_api()
 
-    # Get the games for the current week
-    endpoint = 'games?year=2024&week=' + str(current_week)
+    # Get the games for the current week in the FBS only
+    endpoint = f'games?year=2024&week={current_week}&division=fbs'
     url = base_url + endpoint
     response = requests.get(url, headers=headers)
     data = response.json()
+
+    team_names, team_names_dict = clean_team_names()
+
+    # If a team is playing a team that is not in the FBS, remove that game
+    i = 0
+    while i < len(data):
+        if data[i]['home_team'] not in team_names or data[i]['away_team'] not in team_names:
+            data.pop(i)
+            i -= 1
+        i += 1
 
     # Store the games in a list
     games = []
@@ -200,12 +214,148 @@ def get_current_week():
 
     return current_week
 
+def predict_this_weeks_games():
+    '''
+    This function predicts the games for the current week.
+
+    :return: winners (list) - a list of the predicted winners for the current week
+    '''
+    current_week_games = get_current_week_games()
+
+    matchups = []
+    for game in current_week_games:
+        matchup = f'{game[1]} at {game[0]}'
+        matchups.append(matchup)
+
+    winners = []
+    error_games = []
+    team_names, team_names_dict = clean_team_names()
+    for game in current_week_games:
+        # If there is an error, remove the game
+        try:
+            home_team = game[0]
+            away_team = game[1]
+            home_team = team_names_dict[home_team]
+            away_team = team_names_dict[away_team]
+            winner = predict_winner_all_stats(home_team, away_team)
+            winners.append(winner)
+        except:
+            error_games.append(game)
+
+    # If there are error games, remove them from the matchups
+    for game in error_games:
+        matchup = f'{game[1]} at {game[0]}'
+        matchups.remove(matchup)
+
+    return winners, matchups
+
+def most_guaranteed_to_win(winners, matchups):
+    '''
+    This function predicts the 12 games that are the most guaranteed to win.
+
+    :return: None
+    '''
+    # Each item in winners is stored as such: (winning_team, winning_team_points, losing_team_points)
+    # Find the 12 games that are the most guaranteed to win (biggest difference in points)
+    biggest_differences = []
+    for i in range(len(winners)):
+        difference = winners[i][1] - winners[i][2]
+        biggest_differences.append((difference, matchups[i]))
+
+    biggest_differences.sort(reverse=True)
+    for i in range(12):
+        print(f'\n{biggest_differences[i][1]}: \033[92m{winners[matchups.index(biggest_differences[i][1])][0]}\033[0m')
+        print(f'Points Difference: {biggest_differences[i][0]}')
+
+def predict_this_weeks_SEC_games():
+    '''
+    This function predicts the games for the current week in the SEC.
+
+    :return: winners (list) - a list of the predicted winners for the current week in the SEC
+    '''
+    current_week_games = get_current_week_games()
+
+    matchups = []
+    for game in current_week_games:
+        matchup = f'{game[1]} at {game[0]}'
+        matchups.append(matchup)
+
+    winners = []
+    total_scores = []
+    error_games = []
+    team_names, team_names_dict = clean_team_names()
+    for game in current_week_games:
+        # If there is an error, remove the game
+        try:
+            home_team = game[0]
+            away_team = game[1]
+            home_team = team_names_dict[home_team]
+            away_team = team_names_dict[away_team]
+            if home_team in SEC_TEAMS or away_team in SEC_TEAMS:
+                winner = predict_winner_all_stats(home_team, away_team)
+                winners.append(winner)
+                total_score = predict_points(home_team, away_team)
+                total_scores.append(total_score)
+            else:
+                matchups.remove(f'{away_team} at {home_team}')
+        except:
+            error_games.append(game)
+
+    # If there are error games, remove them from the matchups
+    for game in error_games:
+        try:
+            matchup = f'{game[1]} at {game[0]}'
+            matchups.remove(matchup)
+        except:
+            pass
+
+    return winners, matchups, total_scores
+
+def get_current_week_winners(winners, matchups):
+    '''
+    This function gets the winners for the current week.
+
+    :return: None
+    '''
+    # Print the predicted winners for the current week
+    for i in range(len(matchups)):
+        print(f'{matchups[i]}: {winners[i]}')
+
+def get_current_week_most_guaranteed(winners, matchups):
+    '''
+    This function gets the 12 games that are the most guaranteed to win.
+
+    :return: None
+    '''
+    # Print the 12 games that are the most guaranteed to win (biggest difference in points)
+    print('\n12 Games Most Guaranteed to Win:\n')
+    most_guaranteed_to_win(winners, matchups)
+
+def get_current_week_SEC_predictions(winners, matchups):
+    '''
+    This function gets the predicted winners and totals for the current week in the SEC.
+
+    :return: None
+    '''
+    # Print the predicted winners and totals for the current week in the SEC
+    winners, matchups, total_scores = predict_this_weeks_SEC_games()
+    for i in range(len(matchups)):
+        print(f'{matchups[i]}: {winners[i]}')
+        print(f'Total Score: {total_scores[i]}')
 
 def main():
     global current_week
     current_week = get_current_week()
 
-    print(get_current_week_games())
+    global SEC_TEAMS
+    SEC_TEAMS = ['Alabama', 'Arkansas', 'Auburn', 'Florida', 'Georgia', 'Kentucky', 'LSU', 'Mississippi St.', 'Missouri', 'Ole Miss', 'South Carolina', 'Tennessee', 'Texas A&M', 'Vanderbilt', 'Texas', 'Oklahoma']
+
+    winners, matchups = predict_this_weeks_games()
+
+    #get_current_week_winners(winners, matchups)
+    #get_current_week_most_guaranteed(winners, matchups)
+
+    get_current_week_SEC_predictions(winners, matchups)
 
 if __name__ == "__main__":
     main()
