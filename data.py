@@ -10,6 +10,23 @@ data = pd.read_csv("CFBdata/cfb.csv")
 
 years = ["2017", "2018", "2019", "2020", "2021", "2022", "2023"]
 
+def get_team_names():
+    """
+    Get the names of all the teams in the dataset.
+
+    :return: A list containing the names of all the teams in the dataset.
+    """
+    # Get each team name from the cfb.csv file, ignoring the team years (remove last 5 characters)
+    # Do not include duplicates
+    # Store them in a list
+    cfb_team_names = []
+    for index, row in data.iterrows():
+        cfb_team_names.append(row["team"][:-5])
+    # Remove duplicates
+    cfb_team_names = list(set(cfb_team_names))
+
+    return cfb_team_names
+
 def getAverages(team):
     """
     Get the averages of several categorical statistics for a team.
