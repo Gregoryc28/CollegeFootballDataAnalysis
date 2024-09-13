@@ -2,6 +2,7 @@ from data import *
 from dotenv import load_dotenv
 import os
 import requests
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -144,8 +145,67 @@ def clean_team_names():
     # Return the list of team names
     return team_names, team_names_dict
 
+def get_current_week_games():
+    '''
+    This function gets the games for the current week.
+
+    :return: games (list) - a list of all the games for the current week
+    '''
+    headers, base_url = access_cfb_api()
+
+    # Get the games for the current week
+    endpoint = 'games?year=2024&week=' + str(current_week)
+    url = base_url + endpoint
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    # Store the games in a list
+    games = []
+    for game in data:
+        games.append(game)
+
+    # Format the games in this format: (home_team, away_team)
+    for i in range(len(games)):
+        home_team = games[i]['home_team']
+        away_team = games[i]['away_team']
+        games[i] = (home_team, away_team)
+
+    # Return the list of games
+    return games
+
+def get_current_week():
+    '''
+    This function gets the current week of the college football season.
+
+    :return: current_week (int) - the current week of the college football season
+    '''
+    current_week = 1
+    date = datetime.now()
+    # Get the current week of the college football season
+    endpoint = ('calendar?year=2024')
+    headers, base_url = access_cfb_api()
+    url = base_url + endpoint
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    for week in data:
+        first_game_start = week['firstGameStart']
+        last_game_start = week['lastGameStart']
+        first_game_start = first_game_start.split('T')[0]
+        last_game_start = last_game_start.split('T')[0]
+        first_game_start = datetime.strptime(first_game_start, '%Y-%m-%d')
+        last_game_start = datetime.strptime(last_game_start, '%Y-%m-%d')
+        if date >= first_game_start and date <= last_game_start:
+            current_week = week['week']
+            break
+
+    return current_week
+
+
 def main():
-    print(clean_team_names()[0])
+    global current_week
+    current_week = get_current_week()
+
+    print(get_current_week_games())
 
 if __name__ == "__main__":
     main()
