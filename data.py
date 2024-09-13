@@ -117,7 +117,7 @@ def getTopStats(averages):
     # Get the correlation between wins and all the other statistics
     correlations = {}
     for key in averages:
-        if key != "team" and key != "win" and key != "loss":
+        if key not in ("team", "win", "loss"):
             correlations[key] = np.corrcoef(averages["win"], averages[key])[0][1]
 
     # Sort the correlations
@@ -140,7 +140,7 @@ def getTopStats(averages):
     # Also find the top 3 statistics that are positively correlated with losses and the top 3 statistics that are negatively correlated with losses
     correlations = {}
     for key in averages:
-        if key != "team" and key != "win" and key != "loss":
+        if key not in ("team", "win", "loss"):
             correlations[key] = np.corrcoef(averages["loss"], averages[key])[0][1]
 
     # Sort the correlations
@@ -268,7 +268,7 @@ def predict_winner_all_stats(team1, team2):
     # Identify the correlation between wins and all the other statistics (except for the team name and the win and loss columns)
     correlations = {}
     for key in averagesTeam1:
-        if key != "team" and key != "win" and key != "loss":
+        if key not in ("team", "win", "loss"):
             correlations[key] = np.corrcoef(averagesTeam1["win"], averagesTeam1[key])[
                 0
             ][1]
