@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFB Over/Under Predictions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/predict-winners">Winner Predictions</a></li>
+                <li><a href="/overunder">Over/Under Predictions</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section>
+        <h1>Over/Under Predictions</h1>
+        <div id="overunder-predictions"></div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 CFB Predictor. All rights reserved.</p>
+    </footer>
+
+    <script>
+        fetch('/overunder')
+            .then(response => response.json())
+            .then(data => {
+                const predictionsDiv = document.getElementById('overunder-predictions');
+                const overUnderLines = data.over_under_lines.map((line, index) => {
+                    return `<p>Game ${index + 1}: Line - ${line}, Predicted Score - ${data.predicted_scores[index]}</p>`;
+                }).join('');
+                predictionsDiv.innerHTML = overUnderLines;
+            });
+    </script>
+</body>
+</html>

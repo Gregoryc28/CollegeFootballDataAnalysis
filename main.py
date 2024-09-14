@@ -160,7 +160,7 @@ def get_current_week_games():
     headers, base_url = access_cfb_api()
 
     # Get the games for the current week in the FBS only
-    endpoint = f"games?year=2024&week={current_week}&division=fbs"
+    endpoint = f"games?year=2024&week={get_current_week()}&division=fbs"
     url = base_url + endpoint
     response = requests.get(url, headers=headers)
     data = response.json()
@@ -398,7 +398,7 @@ def get_current_SEC_overUnder_lines():
     :return: home_team (str) - the home team in the game; away_team (str) - the away team in the game; over_under (float) - the over/under line for the game
     """
     headers, base_url = access_cfb_api()
-    endpoint = f"lines?year=2024&week={current_week}&conference=SEC"
+    endpoint = f"lines?year=2024&week={get_current_week()}&conference=SEC"
     url = base_url + endpoint
     response = requests.get(url, headers=headers)
     data = response.json()

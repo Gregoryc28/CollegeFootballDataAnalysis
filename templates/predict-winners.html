@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFB Winner Predictions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/predict-winners">Winner Predictions</a></li>
+                <li><a href="/overunder">Over/Under Predictions</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section>
+        <h1>Winner Predictions</h1>
+        <div id="predictions"></div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 CFB Predictor. All rights reserved.</p>
+    </footer>
+
+    <script>
+        fetch('/predict-winners')
+            .then(response => response.json())
+            .then(data => {
+                const predictionsDiv = document.getElementById('predictions');
+                const games = data.matchups.map((game, index) => {
+                    return `<p>${game}: ${data.winners[index]} wins</p>`;
+                }).join('');
+                predictionsDiv.innerHTML = games;
+            });
+    </script>
+</body>
+</html>
