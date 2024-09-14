@@ -311,7 +311,9 @@ def predict_this_weeks_SEC_games():
             home_team = game[0]
             away_team = game[1]
             if home_team in SEC_TEAMS or away_team in SEC_TEAMS:
-                winner = predict_winner_all_stats(home_team, away_team)
+                winner = predict_winner_all_stats(
+                    home_team, away_team, home_team, away_team
+                )
                 winners.append(winner)
                 total_score = predict_points(home_team, away_team)
                 total_scores.append(total_score)
@@ -362,7 +364,31 @@ def get_current_week_SEC_predictions(winners, matchups):
     # Print the predicted winners and totals for the current week in the SEC
     winners, matchups, total_scores = predict_this_weeks_SEC_games()
 
-    return winners, matchups, total_scores
+    # Return the matchups like this:
+    # (home_team (green if predicted winner), away_team (red if not predicted winner), total_score, points for home team (rounded to 2 decimal points), points for away team (rounded to 2 decimal points))
+    return_list = []
+    for i in range(len(matchups)):
+        home_team = matchups[i].split(" at ")[0]
+        away_team = matchups[i].split(" at ")[1]
+        total_score = total_scores[i]
+        points_home = round(winners[i][1], 2)
+        points_away = round(winners[i][2], 2)
+        if winners[i][0] == home_team:
+            home_team = f"\033[92m{home_team}\033[0m"
+            away_team = f"\033[91m{away_team}\033[0m"
+        else:
+            home_team = f"\033[91m{home_team}\033[0m"
+            away_team = f"\033[92m{away_team}\033[0m"
+            # Flip the points
+            temp = points_home
+            points_home = points_away
+            points_away = temp
+        return_list.append(
+            (home_team, away_team, total_score, points_home, points_away)
+        )
+
+    # Return the nicely formatted data
+    return return_list
 
 
 def get_current_SEC_overUnder_lines():
@@ -611,7 +637,9 @@ def predict_anyWeek_SEC_winners(week):
             home_team = team_names_dict[home_team]
             away_team = team_names_dict[away_team]
             # Predict the winner
-            winner = predict_winner_all_stats(home_team, away_team)
+            winner = predict_winner_all_stats(
+                home_team, away_team, home_team, away_team
+            )
             winners.append(winner)
         except:
             error_games.append(game)
@@ -652,9 +680,6 @@ def check_prior_SEC_winner_accuracy():
     # We need to flatten them to compare them
     actualWinners = list(chain.from_iterable(actualWinners))
     # actualWinners = sorted(actualWinners, key=lambda x: x[0])
-
-    print(actualWinners)
-    print(predictedWinners)
 
     for i in range(len(actualWinners)):
         if actualWinners[i] == predictedWinners[i]:
@@ -719,7 +744,6 @@ def add_team_conference_to_cfbCSV():
             conferences.append(conference)
         except:
             conferences.append("")
-            print(f"Error: {team}")
             continue
 
     cfb_data["conference"] = conferences
@@ -765,6 +789,15 @@ def remove_columns_from_cfbCSV(column):
     cfb_data.to_csv("CFBdata/cfb.csv", index=False)
 
 
+def get_conference_multipliers():
+    """
+    This function gets the multipliers for each conference
+
+    :return: CONFERENCE_MULTIPLIERS (dict) - a dictionary that links each conference to their multiplier
+    """
+    return CONFERENCE_MULTIPLIERS
+
+
 def main():
     global current_week
     current_week = get_current_week()
@@ -794,13 +827,19 @@ def main():
     # get_current_week_winners(winners, matchups)
     # get_current_week_most_guaranteed(winners, matchups)
 
-    # print(get_current_week_SEC_predictions(winners, matchups))
+    # current_week_SEC_predictions = get_current_week_SEC_predictions(winners, matchups)
+    # # Print the data in a nice format
+    # for game in current_week_SEC_predictions:
+    #     print(f"{game[0]} vs. {game[1]}: {game[3]} - {game[4]}")
+    #     print(f"Predicted Total Score: {game[2]}")
+    #     print()
+
     # overUnderLines = []
     # for week in range(1, current_week):
     #     overUnderLines.append(get_anyWeek_SEC_overUnder_lines(week))
     # print(check_prior_SEC_overUnder_accuracy(overUnderLines))
 
-    # print(check_prior_SEC_winner_accuracy())
+    print(check_prior_SEC_winner_accuracy())
 
     # add_team_conference_to_cfbCSV()
     # remove_columns_from_cfbCSV("Conference")
@@ -810,6 +849,62 @@ def main():
     # manually_update_team_conference_to_cfbCSV("NIU", "Mid-American")
     # manually_update_team_conference_to_cfbCSV("ULM", "Sun Belt")
 
+
+Home_Field_Advantage = 1.05
+Away_Field_Disadvantage = 0.95
+
+CONFERENCE_MULTIPLIERS = {
+    "SEC": 1.0,
+    "Big Ten": 0.95,
+    "Big 12": 0.9,
+    "ACC": 0.85,
+    "Pac-12": 0.8,
+    "American Athletic": 0.75,
+    "Mountain West": 0.7,
+    "Sun Belt": 0.65,
+    "Mid-American": 0.6,
+    "Conference USA": 0.55,
+    "FBS Independents": 0.8,
+}
+# CONFERENCE_MULTIPLIERS = {
+#     "SEC": 1.05,  # Slightly increase SEC multiplier due to historical dominance
+#     "Big Ten": 0.98,  # Adjust Big Ten multiplier based on recent performance
+#     "Big 12": 0.88,  # Decrease Big 12 multiplier slightly to account for potential parity
+#     "ACC": 0.83,  # Maintain ACC multiplier
+#     "Pac-12": 0.78,  # Decrease Pac-12 multiplier due to recent challenges
+#     "American Athletic": 0.73,  # Maintain American Athletic multiplier
+#     "Mountain West": 0.68,  # Decrease Mountain West multiplier slightly
+#     "Sun Belt": 0.63,  # Maintain Sun Belt multiplier
+#     "Mid-American": 0.58,  # Maintain Mid-American multiplier
+#     "Conference USA": 0.53,  # Maintain Conference USA multiplier
+#     "FBS Independents": 0.82,  # Adjust FBS Independents multiplier slightly
+# }
+# CONFERENCE_MULTIPLIERS = {
+#     "SEC": 1.1,  # Increase SEC multiplier further
+#     "Big Ten": 0.97,  # Slight adjustment to Big Ten
+#     "Big 12": 0.85,  # Decrease Big 12 further
+#     "ACC": 0.8,  # Decrease ACC slightly
+#     "Pac-12": 0.75,  # Decrease Pac-12 further
+#     "American Athletic": 0.72,  # Slight decrease to American Athletic
+#     "Mountain West": 0.67,  # Decrease Mountain West further
+#     "Sun Belt": 0.6,  # Decrease Sun Belt slightly
+#     "Mid-American": 0.55,  # Decrease Mid-American slightly
+#     "Conference USA": 0.5,  # Decrease Conference USA further
+#     "FBS Independents": 0.85,  # Increase FBS Independents slightly
+# }
+# CONFERENCE_MULTIPLIERS = {
+#     "SEC": 1.15,  # Further increase SEC multiplier
+#     "Big Ten": 0.95,  # Increase Big Ten slightly
+#     "Big 12": 0.82,  # Decrease Big 12 further
+#     "ACC": 0.78,  # Decrease ACC further
+#     "Pac-12": 0.72,  # Decrease Pac-12 further
+#     "American Athletic": 0.7,  # Maintain American Athletic
+#     "Mountain West": 0.65,  # Decrease Mountain West further
+#     "Sun Belt": 0.58,  # Decrease Sun Belt further
+#     "Mid-American": 0.53,  # Decrease Mid-American further
+#     "Conference USA": 0.48,  # Decrease Conference USA further
+#     "FBS Independents": 0.88,  # Increase FBS Independents slightly
+# }
 
 if __name__ == "__main__":
     main()

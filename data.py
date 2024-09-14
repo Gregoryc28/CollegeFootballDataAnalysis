@@ -1,7 +1,10 @@
 # Begin by importing the necessary libraries and modules.
+import traceback
+
 import pandas as pd
 import numpy as np
 from tabulate import tabulate
+import main
 
 # Load the main data (Stored in the CFBdata folder)
 data = pd.read_csv("CFBdata/cfb.csv")
@@ -266,7 +269,7 @@ def predict_winner(team1, team2):
         return team2, team2Points, team1Points
 
 
-def predict_winner_all_stats(team1, team2):
+def predict_winner_all_stats(team1, team2, homeTeam=None, awayTeam=None):
     """
     Predict the winner of a game between two teams based on all the statistics of the two teams.
 
@@ -318,6 +321,35 @@ def predict_winner_all_stats(team1, team2):
             team1Points += 1
         else:
             team2Points += 1
+
+    # Get the conference multipliers
+    try:
+        conference_multipliers = main.CONFERENCE_MULTIPLIERS
+
+        # Adjust the points based on the conference multipliers
+        # Get the conference of each team from the conference column in the data
+        team1conference = data.loc[data["team"].str.contains(team1)].iloc[0][
+            "conference"
+        ]
+        team2conference = data.loc[data["team"].str.contains(team2)].iloc[0][
+            "conference"
+        ]
+        team1Points *= conference_multipliers[team1conference]
+        team2Points *= conference_multipliers[team2conference]
+
+        # If homeTeam and awayTeam are provided, adjust the points based on the home field advantage
+        if homeTeam and awayTeam:
+            home_field_advantage = main.Home_Field_Advantage
+            away_field_disadvantage = main.Away_Field_Disadvantage
+            if team1 == homeTeam:
+                team1Points *= home_field_advantage
+                team2Points *= away_field_disadvantage
+            elif team2 == homeTeam:
+                team2Points *= home_field_advantage
+                team1Points *= away_field_disadvantage
+
+    except:
+        traceback.print_exc()
 
     # Now that we have the number of points for each team, we can predict the winner
     if team1Points > team2Points:
