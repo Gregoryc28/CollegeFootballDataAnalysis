@@ -666,6 +666,105 @@ def check_prior_SEC_winner_accuracy():
     return accuracy
 
 
+def create_teamConference_dict():
+    """
+    This function creates a dictionary that links each team to their conference
+
+    :return: teamConference_dict (dict) - a dictionary that links each team to their conference
+    """
+    headers, base_url = access_cfb_api()
+
+    # Get the teams and their conferences
+    endpoint = "teams/fbs"
+    url = base_url + endpoint
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    # Get the filtered team names
+    team_names, team_names_dict = clean_team_names()
+
+    teamConference_dict = {}
+    for team in data:
+        # Convert the team names to the filtered names and link them to their conferences
+        try:
+            team_name = team["school"]
+            team_name = team_names_dict[team_name]
+            conference = team["conference"]
+            teamConference_dict[team_name] = conference
+        except:
+            continue
+
+    return teamConference_dict
+
+
+def add_team_conference_to_cfbCSV():
+    """
+    This function adds the conference of each team to the CollegeFootballData CSV file
+
+    :return: None
+    """
+    teamConference_dict = create_teamConference_dict()
+
+    # Read the CollegeFootballData CSV file
+    cfb_data = pd.read_csv("CFBdata/cfb.csv")
+
+    # Add the conference of each team to the CollegeFootballData CSV file
+    conferences = []
+    for index, row in cfb_data.iterrows():
+        try:
+            team = row["team"]
+            # Remove the year from the team name (The last 5 characters)
+            team = team[:-5]
+            conference = teamConference_dict[team]
+            conferences.append(conference)
+        except:
+            conferences.append("")
+            print(f"Error: {team}")
+            continue
+
+    cfb_data["conference"] = conferences
+
+    # Save the CollegeFootballData CSV file
+    cfb_data.to_csv("CFBdata/cfb.csv", index=False)
+
+
+def manually_update_team_conference_to_cfbCSV(team, conference):
+    """
+    This function manually updates the conference of a team in the CollegeFootballData CSV file
+
+    :param team: the team whose conference is being updated
+    :param conference: the conference of the team
+    :return: None
+    """
+    # Read the CollegeFootballData CSV file
+    cfb_data = pd.read_csv("CFBdata/cfb.csv")
+
+    # Update the conference of the team in the CollegeFootballData CSV file
+    for index, row in cfb_data.iterrows():
+        if row["team"][:-5] == team:
+            cfb_data.at[index, "conference"] = conference
+
+    # Save the CollegeFootballData CSV file
+    cfb_data.to_csv("CFBdata/cfb.csv", index=False)
+
+
+def remove_columns_from_cfbCSV(column):
+    """
+    This function removes a column from the CollegeFootballData CSV file
+
+    :param column: the column to be removed
+    :return: None
+    """
+    # Read the CollegeFootballData CSV file
+    cfb_data = pd.read_csv("CFBdata/cfb.csv")
+
+    # Remove the column from the CollegeFootballData CSV file
+    cfb_data.drop(column, axis=1, inplace=True)
+
+    # Save the CollegeFootballData CSV file
+    cfb_data.to_csv("CFBdata/cfb.csv", index=False)
+
+
 def main():
     global current_week
     current_week = get_current_week()
@@ -699,9 +798,17 @@ def main():
     # overUnderLines = []
     # for week in range(1, current_week):
     #     overUnderLines.append(get_anyWeek_SEC_overUnder_lines(week))
-    # check_prior_SEC_overUnder_accuracy(overUnderLines)
+    # print(check_prior_SEC_overUnder_accuracy(overUnderLines))
 
-    print(check_prior_SEC_winner_accuracy())
+    # print(check_prior_SEC_winner_accuracy())
+
+    # add_team_conference_to_cfbCSV()
+    # remove_columns_from_cfbCSV("Conference")
+    # manually_update_team_conference_to_cfbCSV("Appalachian St.", "Sun Belt")
+    # manually_update_team_conference_to_cfbCSV("San Jose St.", "Mountain West")
+    # manually_update_team_conference_to_cfbCSV("Coastal Caro.", "Sun Belt")
+    # manually_update_team_conference_to_cfbCSV("NIU", "Mid-American")
+    # manually_update_team_conference_to_cfbCSV("ULM", "Sun Belt")
 
 
 if __name__ == "__main__":
