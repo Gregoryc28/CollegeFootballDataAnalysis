@@ -269,6 +269,19 @@ def predict_winner(team1, team2):
         return team2, team2Points, team1Points
 
 
+def calculate_rolling_averages(averages):
+    rolling_averages = {}
+
+    for stat, data in averages.items():
+        if stat not in ("team", "win", "loss"):
+            rolling_average = 0
+            for value in data:
+                rolling_average = (rolling_average + value) / 2
+            rolling_averages[stat] = rolling_average
+
+    return rolling_averages
+
+
 def predict_winner_all_stats(team1, team2, homeTeam=None, awayTeam=None):
     """
     Predict the winner of a game between two teams based on all the statistics of the two teams.
@@ -308,19 +321,82 @@ def predict_winner_all_stats(team1, team2, homeTeam=None, awayTeam=None):
     team1Points = 0
     team2Points = 0
 
-    # Add a point to the team that has a higher value in a good stat
-    for stat in goodStats:
-        if averagesTeam1[stat].mean() > averagesTeam2[stat].mean():
+    # # Make a list called rollingAverages
+    # rollingAveragesTeam1 = {}
+    # rollingAveragesTeam2 = {}
+    #
+    # # For each stat in averagesTeam1, calculate the rolling average
+    # # A rolling average is not just the average of the stat, but the average of the first two instances, then the average of (the average of the first two isntances, and the third instance), and so on
+    # count = 0
+    # try:
+    #     for stat in averagesTeam1:
+    #         if stat not in ("team", "win", "loss"):
+    #             # Calculate the rolling average for team 1
+    #             rollingAverageTeam1 = 0
+    #             for i in range(len(averagesTeam1[stat])):
+    #                 rollingAverageTeam1 += averagesTeam1[stat][i]
+    #                 if count != 0:
+    #                     rollingAverageTeam1 /= 2
+    #                 count += 1
+    #             # Append the rolling average to the dictionary as the value for the key (stat)
+    #             rollingAveragesTeam1[stat] = rollingAverageTeam1
+    # except:
+    #     pass
+    #
+    # count = 0
+    # try:
+    #     for stat in averagesTeam2:
+    #         if stat not in ("team", "win", "loss"):
+    #             # Calculate the rolling average for team 2
+    #             rollingAverageTeam2 = 0
+    #             for i in range(len(averagesTeam2[stat])):
+    #                 rollingAverageTeam2 += averagesTeam2[stat][i]
+    #                 if count != 0:
+    #                     rollingAverageTeam2 /= 2
+    #                 count += 1
+    #             # Append the rolling average to the dictionary as the value for the key (stat)
+    #             rollingAveragesTeam2[stat] = rollingAverageTeam2
+    # except:
+    #     pass
+
+    rollingAveragesTeam1 = calculate_rolling_averages(averagesTeam1)
+    rollingAveragesTeam2 = calculate_rolling_averages(averagesTeam2)
+
+    # Add a point to the team that has a higher value in a good stat (using the rolling averages)
+    # Use the rolling averages dictionary (the key is the stat and the value is the rolling average)
+    # Compare the key to each stat in the goodStats list to determine if it is a good stat
+    for stat in range(len(goodStats)):
+        if (
+            rollingAveragesTeam1[goodStats[stat]]
+            > rollingAveragesTeam2[goodStats[stat]]
+        ):
             team1Points += 1
         else:
             team2Points += 1
 
-    # Add a point to the team that has a lower value in a bad stat
-    for stat in badStats:
-        if averagesTeam1[stat].mean() < averagesTeam2[stat].mean():
+    # Add a point to the team that has a lower value in a bad stat (using the rolling averages)
+    # Use the rolling averages dictionary (the key is the stat and the value is the rolling average)
+    # Compare the key to each stat in the badStats list to determine if it is a bad stat
+    # Loop through all the badStats (this is okay since we are looking for keys) - no starting point needed
+    for stat in range(len(badStats)):
+        if rollingAveragesTeam1[badStats[stat]] < rollingAveragesTeam2[badStats[stat]]:
             team1Points += 1
         else:
             team2Points += 1
+
+    # # Add a point to the team that has a higher value in a good stat
+    # for stat in goodStats:
+    #     if averagesTeam1[stat].mean() > averagesTeam2[stat].mean():
+    #         team1Points += 1
+    #     else:
+    #         team2Points += 1
+    #
+    # # Add a point to the team that has a lower value in a bad stat
+    # for stat in badStats:
+    #     if averagesTeam1[stat].mean() < averagesTeam2[stat].mean():
+    #         team1Points += 1
+    #     else:
+    #         team2Points += 1
 
     # Get the conference multipliers
     try:
@@ -349,7 +425,7 @@ def predict_winner_all_stats(team1, team2, homeTeam=None, awayTeam=None):
                 team1Points *= away_field_disadvantage
 
     except:
-        traceback.print_exc()
+        pass
 
     # Now that we have the number of points for each team, we can predict the winner
     if team1Points > team2Points:
@@ -374,13 +450,25 @@ def predict_points(team1, team2):
     pointsPerGameTeam1 = averagesTeam1["points_per_game"].mean()
     pointsPerGameTeam2 = averagesTeam2["points_per_game"].mean()
 
+    # # Get the points per game for both teams using rolling averages
+    # pointsPerGameTeam1 = calculate_rolling_averages(averagesTeam1)["points_per_game"]
+    # pointsPerGameTeam2 = calculate_rolling_averages(averagesTeam2)["points_per_game"]
+
     # Get the points per game allowed for both teams
     pointsPerGameAllowedTeam1 = averagesTeam1["avg_points_per_game_allowed"].mean()
     pointsPerGameAllowedTeam2 = averagesTeam2["avg_points_per_game_allowed"].mean()
 
+    # # Get the points per game allowed for both teams using rolling averages
+    # pointsPerGameAllowedTeam1 = calculate_rolling_averages(averagesTeam1)["avg_points_per_game_allowed"]
+    # pointsPerGameAllowedTeam2 = calculate_rolling_averages(averagesTeam2)["avg_points_per_game_allowed"]
+
     # Get the expected points for both teams
     expectedPointsTeam1 = (pointsPerGameTeam1 + pointsPerGameAllowedTeam2) / 2
     expectedPointsTeam2 = (pointsPerGameTeam2 + pointsPerGameAllowedTeam1) / 2
+
+    # # Get the expected points for both teams using just the points per game
+    # expectedPointsTeam1 = pointsPerGameTeam1
+    # expectedPointsTeam2 = pointsPerGameTeam2
 
     return round(expectedPointsTeam1 + expectedPointsTeam2, 3)
 

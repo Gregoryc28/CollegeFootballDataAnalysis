@@ -209,7 +209,7 @@ def get_current_week():
 
     :return: current_week (int) - the current week of the college football season
     """
-    current_week = 1
+    current_week = 4
     date = datetime.now()
     # Get the current week of the college football season
     endpoint = "calendar?year=2024"
@@ -842,7 +842,9 @@ def main():
     #     overUnderLines.append(get_anyWeek_SEC_overUnder_lines(week))
     # print(check_prior_SEC_overUnder_accuracy(overUnderLines))
 
+    start_time = time.time()
     print(check_prior_SEC_winner_accuracy())
+    print("--- %s seconds ---" % (time.time() - start_time))
 
     # add_team_conference_to_cfbCSV()
     # remove_columns_from_cfbCSV("Conference")
@@ -854,7 +856,7 @@ def main():
 
 
 Home_Field_Advantage = 1.05
-Away_Field_Disadvantage = 0.95
+Away_Field_Disadvantage = 0.98
 
 CONFERENCE_MULTIPLIERS = {
     "SEC": 1.0,
