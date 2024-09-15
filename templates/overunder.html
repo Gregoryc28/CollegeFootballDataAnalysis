@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Over/Under Predictions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Over/Under Predictions for SEC Games</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Game</th>
+                <th>Total Predicted Score</th>
+                <th>Over/Under Line</th>
+                <th>Bet</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for home_team, away_team, total_score, over_under_line, over_under in predictions %}
+            <tr>
+                <td>{{ away_team }} at {{ home_team }}</td>
+                <td>{{ total_score }}</td>
+                <td>{{ over_under_line }}</td>
+                <td class="{{ 'over' if over_under == 'over' else 'under' }}">{{ over_under | capitalize }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

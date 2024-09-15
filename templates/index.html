@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFB Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/predict-winners">Winner Predictions</a></li>
+                <li><a href="/overunder">Over/Under Predictions</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Welcome to the CFB Predictor</h1>
+        <p>Analyze and predict College Football outcomes using data from 2017 to 2023.</p>
+    </section>
+
+    <section class="features">
+        <div class="feature">
+            <h2>Winner Prediction</h2>
+            <p>Check this week's game predictions using our advanced models.</p>
+            <a href="/predict-winners" class="btn">View Predictions</a>
+        </div>
+
+        <div class="feature">
+            <h2>Over/Under Prediction</h2>
+            <p>Get insights on betting over or under for this week's games.</p>
+            <a href="/overunder" class="btn">View Predictions</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 CFB Predictor. All rights reserved.</p>
+    </footer>
+</body>
+</html>
