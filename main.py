@@ -18,7 +18,7 @@ warnings.simplefilter("error", RuntimeWarning)
 
 
 def access_cfb_api():
-    api_key = "iOJKcv9hL9DRIxgySV7zG5UGV2SrZsBlPs0xxdxxHwvEaY8IFvdSQabM21iBNtKA"
+    api_key = os.getenv("API_KEY")
 
     # Please note that API keys should be supplied with "Bearer " prepended (e.g. "Bearer your_key")
     headers = {"Authorization": "Bearer " + api_key}
