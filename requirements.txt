@@ -1,0 +1,11 @@
+flask
+pandas
+numpy
+tabulate
+warnings
+dotenv
+os
+requests
+datetime
+itertools
+time
