@@ -280,12 +280,22 @@ def most_guaranteed_to_win(winners, matchups):
         difference = winners[i][1] - winners[i][2]
         biggest_differences.append((difference, matchups[i]))
 
+    # Find the expected total scores for each game using the predict_points function
+    total_scores = []
+    for i in range(len(matchups)):
+        home_team = matchups[i].split(" at ")[0]
+        away_team = matchups[i].split(" at ")[1]
+        total_score = predict_points(home_team, away_team)
+        total_scores.append(total_score)
+
     biggest_differences.sort(reverse=True)
     for i in range(12):
         print(
             f"\n{biggest_differences[i][1]}: \033[92m{winners[matchups.index(biggest_differences[i][1])][0]}\033[0m"
         )
-        print(f"Points Difference: {biggest_differences[i][0]}")
+        print(
+            f"Expected Total Score: {total_scores[matchups.index(biggest_differences[i][1])]}"
+        )
 
 
 def predict_this_weeks_SEC_games():
@@ -350,8 +360,6 @@ def get_current_week_most_guaranteed(winners, matchups):
 
     :return: None
     """
-    # Print the 12 games that are the most guaranteed to win (biggest difference in points)
-    print("\n12 Games Most Guaranteed to Win:\n")
     most_guaranteed_to_win(winners, matchups)
 
 
@@ -650,6 +658,77 @@ def predict_anyWeek_SEC_winners(week):
     return winners
 
 
+def get_anyWeek_winners(week):
+    """
+    This function gets the winners for all games in a given week
+
+    :return: winners (list) - a list of the predicted winners for all games in a given week
+    """
+    headers, base_url = access_cfb_api()
+    endpoint = f"games?year=2024&week={week}"
+    url = base_url + endpoint
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    winners = {}
+    error_games = []
+    team_names, team_names_dict = clean_team_names()
+    for game in data:
+        # If there is an error, remove the game
+        try:
+            home_team = game["home_team"]
+            away_team = game["away_team"]
+            # convert team names to filtered names
+            home_team = team_names_dict[home_team]
+            away_team = team_names_dict[away_team]
+            # Figure out which team had the higher score
+            if game["home_points"] > game["away_points"]:
+                winner = home_team
+            else:
+                winner = away_team
+            # Append the winner with the week as the value
+            winners[(home_team, away_team)] = winner
+        except:
+            error_games.append(game)
+
+    return winners
+
+
+def predict_anyWeek_winners(week):
+    """
+    This function predicts the winners for all games in a given week
+
+    :return: winners (list) - a list of the predicted winners for all games in a given week
+    """
+    headers, base_url = access_cfb_api()
+    endpoint = f"games?year=2024&week={week}"
+    url = base_url + endpoint
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    winners = {}
+    error_games = []
+    team_names, team_names_dict = clean_team_names()
+    for game in data:
+        # If there is an error, remove the game
+        try:
+            home_team = game["home_team"]
+            away_team = game["away_team"]
+            # convert team names to filtered names
+            home_team = team_names_dict[home_team]
+            away_team = team_names_dict[away_team]
+            # Predict the winner
+            winner = predict_winner_all_stats(
+                home_team, away_team, home_team, away_team
+            )
+            # Append the winner with the week as the value
+            winners[(home_team, away_team)] = winner[0], winner[1], winner[2]
+        except:
+            error_games.append(game)
+
+    return winners
+
+
 def check_prior_SEC_winner_accuracy():
     """
     This function checks the accuracy of the predicted winners for the SEC games in prior weeks
@@ -686,6 +765,120 @@ def check_prior_SEC_winner_accuracy():
 
     for i in range(len(actualWinners)):
         if actualWinners[i] == predictedWinners[i]:
+            correct += 1
+        else:
+            wrong += 1
+
+    accuracy = correct / (correct + wrong) * 100
+    return accuracy
+
+
+def check_prior_winner_accuracy():
+    """
+    This function checks the accuracy of the predicted winners for all games in prior weeks
+
+    :return: accuracy (float) - the accuracy of the predicted winners for all games in prior weeks
+    """
+    # Get the actual winners for each game in every week prior to the current week
+    # Keep in mind you will have a dictionary with the key being the tuple of the home and away team and the value being the winner
+    actualWinners = {}
+    for week in range(1, current_week):
+        actualWinners.update(get_anyWeek_winners(week))
+
+    # Get the predicted winners for each game in every week prior to the current week
+    # Keep in mind you will have a dictionary with the key being the tuple of the home and away team and the value being the winner
+    predictedWinners = {}
+    for week in range(1, current_week):
+        predictedWinners.update(predict_anyWeek_winners(week))
+
+    # Make sure the two dictionaries have the same keys
+    # If they don't, remove the keys that are not in both dictionaries
+    for key in list(actualWinners.keys()):
+        if key not in predictedWinners:
+            actualWinners.pop(key)
+
+    for key in list(predictedWinners.keys()):
+        if key not in actualWinners:
+            predictedWinners.pop(key)
+
+    correct = 0
+    wrong = 0
+
+    for key in actualWinners:
+        if actualWinners[key] == predictedWinners[key][0]:
+            correct += 1
+        else:
+            wrong += 1
+
+    accuracy = correct / (correct + wrong) * 100
+    return accuracy
+
+
+def get_any_week_most_guaranteed(week):
+    """
+    This function gets the 12 games that are the most guaranteed to win in a given week
+
+    :return: None
+    """
+    # Get the actual winners for each game in the week
+    actualWinners = get_anyWeek_winners(week)
+
+    # Get the predicted winners for each game in the week
+    predictedWinners = predict_anyWeek_winners(week)
+
+    # Remove any games with teams in predictedWinners that are not in actualWinners
+    for key in list(predictedWinners.keys()):
+        if key not in actualWinners:
+            predictedWinners.pop(key)
+
+    for key in list(actualWinners.keys()):
+        if key not in predictedWinners:
+            actualWinners.pop(key)
+
+    # Each item in winners is stored as such: (winning_team, winning_team_points, losing_team_points)
+    # Find the 12 games that are the most guaranteed to win (biggest difference in points)
+    biggest_differences = []
+    for key in actualWinners:
+        difference = predictedWinners[key][1] - predictedWinners[key][2]
+        biggest_differences.append((difference, key))
+
+    # Return the 12 games that are the most guaranteed to win (biggest difference in points)
+    biggest_differences.sort(reverse=True)
+    most_guaranteed = []
+    for i in range(12):
+        most_guaranteed.append(
+            (
+                biggest_differences[i][1],
+                predictedWinners[biggest_differences[i][1]][0],
+                biggest_differences[i][0],
+            )
+        )
+
+    return most_guaranteed
+
+
+def check_prior_mostGuaranteed_winner_accuracy():
+    """
+    This function checks the accuracy of the predicted winners for the 12 most guaranteed games in prior weeks
+
+    :return: accuracy (float) - the accuracy of the predicted winners for the 12 most guaranteed games in prior weeks
+    """
+    # Get all previous weeks most guaranteed winners
+    most_guaranteed = []
+    for week in range(1, current_week):
+        most_guaranteed_weekly = get_any_week_most_guaranteed(week)
+        most_guaranteed.extend(most_guaranteed_weekly)
+
+    # Get the actual winners for each game in every week prior to the current week
+    actualWinners = {}
+    for week in range(1, current_week):
+        actualWinners.update(get_anyWeek_winners(week))
+
+    correct = 0
+    wrong = 0
+
+    for game in most_guaranteed:
+        if actualWinners[game[0]] == game[1]:
             correct += 1
         else:
             wrong += 1
@@ -828,7 +1021,7 @@ def main():
     winners, matchups = predict_this_weeks_games()
 
     # get_current_week_winners(winners, matchups)
-    # get_current_week_most_guaranteed(winners, matchups)
+    get_current_week_most_guaranteed(winners, matchups)
 
     # current_week_SEC_predictions = get_current_week_SEC_predictions(winners, matchups)
     # # Print the data in a nice format
@@ -842,9 +1035,17 @@ def main():
     #     overUnderLines.append(get_anyWeek_SEC_overUnder_lines(week))
     # print(check_prior_SEC_overUnder_accuracy(overUnderLines))
 
-    start_time = time.time()
-    print(check_prior_SEC_winner_accuracy())
-    print("--- %s seconds ---" % (time.time() - start_time))
+    # start_time = time.time()
+    # print(check_prior_SEC_winner_accuracy())
+    # print("--- %s seconds ---" % (time.time() - start_time))
+
+    # start_time = time.time()
+    # print(check_prior_winner_accuracy())
+    # print("--- %s seconds ---" % (time.time() - start_time))
+
+    # start_time = time.time()
+    # print(check_prior_mostGuaranteed_winner_accuracy())
+    # print("--- %s seconds ---" % (time.time() - start_time))
 
     # add_team_conference_to_cfbCSV()
     # remove_columns_from_cfbCSV("Conference")
