@@ -3,39 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CFB Over/Under Predictions</title>
+    <title>Over/Under Predictions</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/predict-winners">Winner Predictions</a></li>
-                <li><a href="/overunder">Over/Under Predictions</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <section>
-        <h1>Over/Under Predictions</h1>
-        <div id="overunder-predictions"></div>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 CFB Predictor. All rights reserved.</p>
-    </footer>
-
-    <script>
-        fetch('/overunder')
-            .then(response => response.json())
-            .then(data => {
-                const predictionsDiv = document.getElementById('overunder-predictions');
-                const overUnderLines = data.over_under_lines.map((line, index) => {
-                    return `<p>Game ${index + 1}: Line - ${line}, Predicted Score - ${data.predicted_scores[index]}</p>`;
-                }).join('');
-                predictionsDiv.innerHTML = overUnderLines;
-            });
-    </script>
+    <h1>Over/Under Predictions for SEC Games</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Game</th>
+                <th>Total Predicted Score</th>
+                <th>Over/Under Line</th>
+                <th>Bet</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for home_team, away_team, total_score, over_under_line, over_under in predictions %}
+            <tr>
+                <td>{{ away_team }} at {{ home_team }}</td>
+                <td>{{ total_score }}</td>
+                <td>{{ over_under_line }}</td>
+                <td class="{{ 'over' if over_under == 'over' else 'under' }}">{{ over_under | capitalize }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

@@ -403,12 +403,15 @@ def get_current_SEC_overUnder_lines():
     response = requests.get(url, headers=headers)
     data = response.json()
 
+    overUnderLines = []
+
     for game in data:
         home_team = game["homeTeam"]
         away_team = game["awayTeam"]
         over_under = game["lines"][0]["overUnder"]
+        overUnderLines.append((home_team, away_team, over_under))
 
-    return (home_team, away_team, over_under)
+    return overUnderLines
 
 
 def get_anyWeek_SEC_overUnder_lines(week):

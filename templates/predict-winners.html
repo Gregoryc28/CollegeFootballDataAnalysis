@@ -3,39 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CFB Winner Predictions</title>
+    <title>Predict Winners</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <header>
-        <nav>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/predict-winners">Winner Predictions</a></li>
-                <li><a href="/overunder">Over/Under Predictions</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <section>
-        <h1>Winner Predictions</h1>
-        <div id="predictions"></div>
-    </section>
-
-    <footer>
-        <p>&copy; 2024 CFB Predictor. All rights reserved.</p>
-    </footer>
-
-    <script>
-        fetch('/predict-winners')
-            .then(response => response.json())
-            .then(data => {
-                const predictionsDiv = document.getElementById('predictions');
-                const games = data.matchups.map((game, index) => {
-                    return `<p>${game}: ${data.winners[index]} wins</p>`;
-                }).join('');
-                predictionsDiv.innerHTML = games;
-            });
-    </script>
+    <h1>Predicted Winners for This Week's Games</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Game</th>
+                <th>Predicted Winner</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for game, winner in matchups %}
+            <tr>
+                <td>{{ game }}</td>
+                <td>{{ winner[0] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
