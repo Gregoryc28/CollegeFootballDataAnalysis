@@ -3,26 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Predict Winners</title>
+    <title>CFB Predictor - Winner Predictions</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Predicted Winners for This Week's Games</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Game</th>
-                <th>Predicted Winner</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for game, winner in matchups %}
-            <tr>
-                <td>{{ game }}</td>
-                <td>{{ winner[0] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/predict-winners">Winner Predictions</a></li>
+                <li><a href="/overunder">Over/Under Predictions</a></li>
+                <li><a href="/most-guaranteed">Most Guaranteed Wins</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Predicted Winners for This Week's Games</h1>
+    </section>
+
+    <section class="predictions">
+        <table>
+            <thead>
+                <tr>
+                    <th>Game</th>
+                    <th>Predicted Winner</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for game, winner in matchups %}
+                <tr>
+                    <td>{{ game }}</td>
+                    <td>{{ winner[0] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 CFB Predictor. All rights reserved.</p>
+    </footer>
 </body>
 </html>

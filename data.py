@@ -470,6 +470,23 @@ def predict_points(team1, team2):
     # expectedPointsTeam1 = pointsPerGameTeam1
     # expectedPointsTeam2 = pointsPerGameTeam2
 
+    # Get the conference multipliers
+    try:
+        conference_multipliers = main.CONFERENCE_MULTIPLIERS
+
+        # Adjust the points based on the conference multipliers
+        # Get the conference of each team from the conference column in the data
+        team1conference = data.loc[data["team"].str.contains(team1)].iloc[0][
+            "conference"
+        ]
+        team2conference = data.loc[data["team"].str.contains(team2)].iloc[0][
+            "conference"
+        ]
+        expectedPointsTeam1 *= conference_multipliers[team1conference]
+        expectedPointsTeam2 *= conference_multipliers[team2conference]
+    except:
+        pass
+
     return round(expectedPointsTeam1 + expectedPointsTeam2, 3)
 
 

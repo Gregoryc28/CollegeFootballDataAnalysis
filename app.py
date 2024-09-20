@@ -1,12 +1,21 @@
 from flask import Flask, jsonify, render_template
+from flask_caching import Cache
+
+cache = Cache()
+
 from main import (
     predict_this_weeks_games,
     get_current_SEC_overUnder_lines,
     predict_anyWeek_SEC_totalScores,
     get_current_week,
+    get_current_week_most_guaranteed_easyFormat,
 )
 
 app = Flask(__name__)
+app.config["CACHE_TYPE"] = "simple"  # Choose a suitable backend
+app.config["CACHE_DEFAULT_TIMEOUT"] = 300  # Set cache expiration time in seconds
+
+cache.init_app(app)
 
 
 # Home page
@@ -17,6 +26,7 @@ def home():
 
 # Winner Prediction Page
 @app.route("/predict-winners")
+@cache.cached(timeout=3600)  # Cache for 1 hour
 def predict_winners():
     winners, matchups = predict_this_weeks_games()
     # Send data to HTML page
@@ -25,6 +35,7 @@ def predict_winners():
 
 # OverUnder Prediction Page
 @app.route("/overunder")
+@cache.cached(timeout=3600)  # Cache for 1 hour
 def over_under():
     current_week = get_current_week()
     overunder_lines = get_current_SEC_overUnder_lines()
@@ -57,6 +68,17 @@ def over_under():
 
     # Send data to HTML page
     return render_template("overunder.html", predictions=predictions)
+
+
+@app.route("/most-guaranteed")
+@cache.cached(timeout=3600)  # Cache for 1 hour
+def most_guaranteed():
+    winners, matchups = predict_this_weeks_games()
+    # Get the most guaranteed games for this week
+    most_guaranteed = get_current_week_most_guaranteed_easyFormat(winners, matchups)
+
+    # Send data to HTML page
+    return render_template("most-guaranteed.html", most_guaranteed=most_guaranteed)
 
 
 if __name__ == "__main__":

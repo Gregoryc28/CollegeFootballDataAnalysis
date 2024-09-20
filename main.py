@@ -254,7 +254,9 @@ def predict_this_weeks_games():
             away_team = game[1]
             home_team = team_names_dict[home_team]
             away_team = team_names_dict[away_team]
-            winner = predict_winner_all_stats(home_team, away_team)
+            winner = predict_winner_all_stats(
+                home_team, away_team, home_team, away_team
+            )
             winners.append(winner)
         except:
             error_games.append(game)
@@ -267,7 +269,7 @@ def predict_this_weeks_games():
     return winners, matchups
 
 
-def most_guaranteed_to_win(winners, matchups):
+def most_guaranteed_to_win(winners, matchups, print_range):
     """
     This function predicts the 12 games that are the most guaranteed to win.
 
@@ -289,13 +291,25 @@ def most_guaranteed_to_win(winners, matchups):
         total_scores.append(total_score)
 
     biggest_differences.sort(reverse=True)
-    for i in range(12):
+    # Uncomment to print most guaranteed
+    for i in range(print_range):
         print(
             f"\n{biggest_differences[i][1]}: \033[92m{winners[matchups.index(biggest_differences[i][1])][0]}\033[0m"
         )
         print(
             f"Expected Total Score: {total_scores[matchups.index(biggest_differences[i][1])]}"
         )
+
+    # Set this up in a returnable format (home_team, away_team, total_score)
+    return_list = []
+    for i in range(12):
+        home_team = biggest_differences[i][1].split(" at ")[0]
+        away_team = biggest_differences[i][1].split(" at ")[1]
+        total_score = total_scores[matchups.index(biggest_differences[i][1])]
+        winner = winners[matchups.index(biggest_differences[i][1])][0]
+        return_list.append((home_team, away_team, total_score, winner))
+
+    return return_list
 
 
 def predict_this_weeks_SEC_games():
@@ -360,7 +374,8 @@ def get_current_week_most_guaranteed(winners, matchups):
 
     :return: None
     """
-    most_guaranteed_to_win(winners, matchups)
+    wow = most_guaranteed_to_win(winners, matchups, 12)
+    return wow
 
 
 def get_current_week_SEC_predictions(winners, matchups):
@@ -887,6 +902,75 @@ def check_prior_mostGuaranteed_winner_accuracy():
     return accuracy
 
 
+def get_current_week_x_most_guaranteed(winners, matchups, num_top):
+    """
+    This function gets the x games that are the most guaranteed to win for the current week
+
+    :param winners: The predicted winners for the current week
+    :param matchups: The matchups for the current week
+    :param num_top: The number of games to get that are the most guaranteed to win
+    :return: x_most_guaranteed (list) - a list of the x games that are the most guaranteed to win for the current week
+    """
+    # If num_top is greater than 12, set it to 12 and print a message
+    if num_top > 12:
+        print("The maximum number of games that are the most guaranteed to win is 12.")
+        num_top = 12
+
+    # Get the 12 most guaranteed games
+    most_guaranteed = most_guaranteed_to_win(winners, matchups, num_top)
+
+    # Get the x most guaranteed games
+    x_most_guaranteed = most_guaranteed[:num_top]
+
+    return x_most_guaranteed
+
+
+def get_any_week_x_most_guaranteed(num_top, week):
+    """
+    This function gets the x games that are the most guaranteed to win in a given week
+
+    :param week: the week to get the x most guaranteed games for
+    :return: x_most_guaranteed (list) - a list of the x games that are the most guaranteed to win in a given week
+    """
+    # Utilize the get_any_week_most_guaranteed function to get the 12 most guaranteed games
+    most_guaranteed = get_any_week_most_guaranteed(week)
+
+    # Get the 4 most guaranteed games
+    four_most_guaranteed = most_guaranteed[:num_top]
+
+    return four_most_guaranteed
+
+
+def check_prior_x_mostGuaranteed_winner_accuracy(x):
+    """
+    This function checks the accuracy of the predicted winners for the x most guaranteed games in prior weeks
+
+    :return: accuracy (float) - the accuracy of the predicted winners for the x most guaranteed games in prior weeks
+    """
+    # Get all previous weeks most guaranteed winners
+    most_guaranteed = []
+    for week in range(1, current_week):
+        most_guaranteed_weekly = get_any_week_x_most_guaranteed(x, week)
+        most_guaranteed.extend(most_guaranteed_weekly)
+
+    # Get the actual winners for each game in every week prior to the current week
+    actualWinners = {}
+    for week in range(1, current_week):
+        actualWinners.update(get_anyWeek_winners(week))
+
+    correct = 0
+    wrong = 0
+
+    for game in most_guaranteed:
+        if actualWinners[game[0]] == game[1]:
+            correct += 1
+        else:
+            wrong += 1
+
+    accuracy = correct / (correct + wrong) * 100
+    return accuracy
+
+
 def create_teamConference_dict():
     """
     This function creates a dictionary that links each team to their conference
@@ -985,6 +1069,19 @@ def remove_columns_from_cfbCSV(column):
     cfb_data.to_csv("CFBdata/cfb.csv", index=False)
 
 
+def get_current_week_most_guaranteed_easyFormat(winners, matchups):
+    """
+    This function gets the 12 games that are the most guaranteed to win in the current week
+
+    :return: most_guaranteed (list) - a list of the 12 games that are the most guaranteed to win in the current week
+    """
+    # Get the most guaranteed winners of the current week
+    most_guaranteed = get_current_week_most_guaranteed(winners, matchups)
+
+    # Return the most guaranteed winners in an easy-to-read format
+    return most_guaranteed
+
+
 def get_conference_multipliers():
     """
     This function gets the multipliers for each conference
@@ -1022,6 +1119,7 @@ def main():
 
     # get_current_week_winners(winners, matchups)
     get_current_week_most_guaranteed(winners, matchups)
+    # get_current_week_x_most_guaranteed(winners, matchups, 6)
 
     # current_week_SEC_predictions = get_current_week_SEC_predictions(winners, matchups)
     # # Print the data in a nice format
@@ -1047,6 +1145,10 @@ def main():
     # print(check_prior_mostGuaranteed_winner_accuracy())
     # print("--- %s seconds ---" % (time.time() - start_time))
 
+    # start_time = time.time()
+    # print(check_prior_x_mostGuaranteed_winner_accuracy(11))
+    # print("--- %s seconds ---" % (time.time() - start_time))
+
     # add_team_conference_to_cfbCSV()
     # remove_columns_from_cfbCSV("Conference")
     # manually_update_team_conference_to_cfbCSV("Appalachian St.", "Sun Belt")
@@ -1059,19 +1161,19 @@ def main():
 Home_Field_Advantage = 1.05
 Away_Field_Disadvantage = 0.98
 
-CONFERENCE_MULTIPLIERS = {
-    "SEC": 1.0,
-    "Big Ten": 0.95,
-    "Big 12": 0.9,
-    "ACC": 0.85,
-    "Pac-12": 0.8,
-    "American Athletic": 0.75,
-    "Mountain West": 0.7,
-    "Sun Belt": 0.65,
-    "Mid-American": 0.6,
-    "Conference USA": 0.55,
-    "FBS Independents": 0.8,
-}
+# CONFERENCE_MULTIPLIERS = {
+#     "SEC": 1.0,
+#     "Big Ten": 0.95,
+#     "Big 12": 0.9,
+#     "ACC": 0.85,
+#     "Pac-12": 0.8,
+#     "American Athletic": 0.75,
+#     "Mountain West": 0.7,
+#     "Sun Belt": 0.65,
+#     "Mid-American": 0.6,
+#     "Conference USA": 0.55,
+#     "FBS Independents": 0.8,
+# }
 # CONFERENCE_MULTIPLIERS = {
 #     "SEC": 1.05,  # Slightly increase SEC multiplier due to historical dominance
 #     "Big Ten": 0.98,  # Adjust Big Ten multiplier based on recent performance
@@ -1085,6 +1187,8 @@ CONFERENCE_MULTIPLIERS = {
 #     "Conference USA": 0.53,  # Maintain Conference USA multiplier
 #     "FBS Independents": 0.82,  # Adjust FBS Independents multiplier slightly
 # }
+
+# Best for prior SEC winner accuracy and all winner accuracy
 # CONFERENCE_MULTIPLIERS = {
 #     "SEC": 1.1,  # Increase SEC multiplier further
 #     "Big Ten": 0.97,  # Slight adjustment to Big Ten
@@ -1098,19 +1202,21 @@ CONFERENCE_MULTIPLIERS = {
 #     "Conference USA": 0.5,  # Decrease Conference USA further
 #     "FBS Independents": 0.85,  # Increase FBS Independents slightly
 # }
-# CONFERENCE_MULTIPLIERS = {
-#     "SEC": 1.15,  # Further increase SEC multiplier
-#     "Big Ten": 0.95,  # Increase Big Ten slightly
-#     "Big 12": 0.82,  # Decrease Big 12 further
-#     "ACC": 0.78,  # Decrease ACC further
-#     "Pac-12": 0.72,  # Decrease Pac-12 further
-#     "American Athletic": 0.7,  # Maintain American Athletic
-#     "Mountain West": 0.65,  # Decrease Mountain West further
-#     "Sun Belt": 0.58,  # Decrease Sun Belt further
-#     "Mid-American": 0.53,  # Decrease Mid-American further
-#     "Conference USA": 0.48,  # Decrease Conference USA further
-#     "FBS Independents": 0.88,  # Increase FBS Independents slightly
-# }
+
+# Best for Large Leg Most Guaranteed Parlays (current_week = 4, percent accuracy = 80.56)
+CONFERENCE_MULTIPLIERS = {
+    "SEC": 1.15,  # Further increase SEC multiplier
+    "Big Ten": 0.95,  # Increase Big Ten slightly
+    "Big 12": 0.82,  # Decrease Big 12 further
+    "ACC": 0.78,  # Decrease ACC further
+    "Pac-12": 0.72,  # Decrease Pac-12 further
+    "American Athletic": 0.7,  # Maintain American Athletic
+    "Mountain West": 0.65,  # Decrease Mountain West further
+    "Sun Belt": 0.58,  # Decrease Sun Belt further
+    "Mid-American": 0.53,  # Decrease Mid-American further
+    "Conference USA": 0.48,  # Decrease Conference USA further
+    "FBS Independents": 0.88,  # Increase FBS Independents slightly
+}
 
 if __name__ == "__main__":
     main()
